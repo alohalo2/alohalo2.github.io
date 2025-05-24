@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>[#1] JPA @Param 실수 방지와 STS vs IntelliJ 자동 import 차이</title>
+    <url>/2025/05/25/blog-1/</url>
+    <content><![CDATA[STS에서 @Query를 사용할 때, 변수명(:auctionIndex)에 대응되는 @Param 어노테이션을 누락하면 런타임 오류가 발생합니다.또한, @Param import 경로가 잘못되었을 경우 IDE에 따라 오류 인식 여부가 다르게 나타납니다.
+이 글에서는 다음 두 가지 주요 실수를 실제 예시를 통해 살펴봅니다:
+
+@Param 어노테이션 누락 문제 (네임 매핑 오류)
+@Param import 경로 오류와 IDE별 감지 차이
+
+
+1. @Query에서 @Param을 누락한 경우: IDE 차이에 따른 오류 감지 여부STS에서 @Query의 변수명 :auctionIndex에 대응되는 @Param(&quot;auctionIndex&quot;) 어노테이션을 명시하지 않으면, 런타임 시점에서 명시적 매핑 오류가 발생합니다.
+이때 STS는 컴파일 단계에서 경고 또는 오류를 명확히 표시하지만, IntelliJ는 자동화로 오류가 나지 않아서 실수를 놓치기 쉽습니다.
+❌ 잘못된 예시 (@Param 누락)@Query(&quot;SELECT MAX(a.bidAmount) FROM AuctionInfo a WHERE a.auction.auctionIndex = :auctionIndex&quot;)Optional&lt;Long&gt; findMaxBidAmountByAuctionIndex(Long auctionIndex); // ❌
+
+
+:auctionIndex는 @Param(&quot;auctionIndex&quot;)와 매핑되지 않아 런타임 오류 발생
+STS는 @Param 누락을 경고하거나 오류로 표시함
+IntelliJ는 자동화 때문에 실수가 감지되지 않음
+
+✅ 올바른 예시 (@Param 명시)@Query(&quot;SELECT MAX(a.bidAmount) FROM AuctionInfo a WHERE a.auction.auctionIndex = :auctionIndex&quot;)Optional&lt;Long&gt; findMaxBidAmountByAuctionIndex(@Param(&quot;auctionIndex&quot;) Long auctionIndex); // ✅
+
+
+팁: @Query 내의 변수명 :xxx는 반드시 @Param(&quot;xxx&quot;) 어노테이션을 통해 명시적으로 매핑해야 하며, 생략 시 런타임 오류가 발생합니다.
+
+
+2. @Param import 경로 오류: STS vs IntelliJ 자동 완성 차이이번에는 동일한 코드에서 IDE에 따라 import 경로 오류가 감지되는지 여부를 살펴봅니다.
+⚠️ 문제 상황 예시import bibid.entity.Auction;import bibid.entity.AuctionInfo;import bibid.entity.Member;// import io.lettuce.core.dynamic.annotation.Param; (잘못된 import)import org.springframework.data.repository.query.Param; // 올바른 import@Query(&quot;SELECT a.member FROM Auction a WHERE a.auctionIndex = :auctionIndex&quot;)Optional&lt;Member&gt; findMemberByAuction_AuctionIndex(@Param(&quot;auctionIndex&quot;) Long auctionIndex);
+
+
+IntelliJ에서는 @Param 어노테이션을 자동 완성해주지만, 잘못된 패키지(io.lettuce...)에서 import되더라도 오류로 표시되지 않을 수 있습니다
+STS는 잘못된 import를 인식하고 컴파일 오류로 명확히 경고합니다
+
+IDE별 차이 요약
+
+
+IDE
+@Param import 오류 감지
+자동 완성
+경고 표시
+
+
+
+STS
+빠르게 감지
+제한적
+명확한 컴파일 오류 발생
+
+
+IntelliJ
+감지 어려움
+매우 강력
+경고 없이 넘어갈 수 있음
+
+
+
+실무 주의점: @Param이 자동 완성되더라도, 어떤 패키지에서 import되었는지 반드시 확인하세요.
+
+
+마무리코드를 작성할 때는 단순 문법 오류뿐만 아니라, 어노테이션 매핑 누락과 import 경로 실수 같은 구조적 실수가 자주 발생합니다.따라서 IDE 자동화 기능에 의존하는 대신, 코드 리뷰와 명확한 어노테이션 명시, import 경로 점검이 중요하다고 생각합니다.
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>개발환경</category>
+      </categories>
+      <tags>
+        <tag>JPA</tag>
+        <tag>Spring Boot</tag>
+        <tag>STS</tag>
+        <tag>IntelliJ</tag>
+        <tag>Query</tag>
+        <tag>Param</tag>
+      </tags>
+  </entry>
+</search>
